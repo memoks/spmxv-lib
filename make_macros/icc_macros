@@ -1,0 +1,52 @@
+
+#################################################################################################
+# Normal icc build
+#################################################################################################
+
+INC_DIRS = -I$(PROJECT_DIR)/src
+
+RUN_TIME_SHARED_LIB_DIRS = -Wl,-rpath,/opt/intel/mkl/lib/intel64 \
+	-Wl,-rpath,/opt/intel/lib/intel64 \
+	-Wl,-rpath,/opt/intel/composer_xe_2013_sp1/lib/intel64 \
+	-Wl,-rpath,/opt/intel/composer_xe_2013_sp1/mkl/lib/intel64
+
+LIB_DIRS = -L/opt/intel/mkl/lib/intel64 \
+	-L/opt/intel/lib/intel64 \
+	-L/opt/intel/composer_xe_2013_sp1/lib/intel64 \
+	-L/opt/intel/composer_xe_2013_sp1/mkl/lib/intel64 \
+	-L/mnt/compgen/inhouse/icc/maggie/composer_xe_2013/mkl/lib/mic \
+	-L/mnt/compgen/inhouse/icc/maggie/composer_xe_2013/lib/mic
+
+BUILD_DIR = build_icc
+ARCH_PATH = arch/icc
+
+ARCH_MACROS = -DARCH_ICC -DPROGRAM_MODE=$(PROGRAM_MODE)
+ARCH_FILES = spmxv_mkl
+
+
+# Compiler options
+#################################################################################################
+
+# icc output
+##################
+# -qopt-report[=6] -qopt-report-phase=vec (vectorization report) 
+# -opt-report-phase ipo_inl (lists inlined functions)
+
+CC = /opt/intel/bin/icc  
+CFLAGS = -c -std=c99 -openmp -g3 \
+	$(INC_DIRS) -mkl=parallel $(ARCH_MACROS) $(MACROS)
+
+LD = /opt/intel/bin/icc
+LIBS = -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core
+LDFLAGS = -openmp $(LIB_DIRS) $(RUN_TIME_SHARED_LIB_DIRS) \
+	-mkl=parallel $(LIBS) -lpthread -lm 
+
+# ARCH DEPENDENT CODE FILES
+#################################################################################################
+ 
+ARCH_OBJS = $(foreach file, $(ARCH_FILES), $(BUILD_DIR)/$(file).o)
+
+ALL_OBJS = $(OBJS) $(ARCH_OBJS)
+
+$(BUILD_DIR)/spmxv_mkl.o : $(SRC)/$(ARCH_PATH)/inc/spmxv_mkl.h $(SRC)/$(ARCH_PATH)/spmxv_mkl.c
+	$(CC) $(CFLAGS) $(SRC)/$(ARCH_PATH)/spmxv_mkl.c -o $(BUILD_DIR)/spmxv_mkl.o

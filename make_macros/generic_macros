@@ -1,0 +1,34 @@
+
+#################################################################################################
+# Normal gcc build
+#################################################################################################
+
+INC_DIRS = -I$(PROJECT_DIR)/src
+	
+LIB_DIRS =
+
+BUILD_DIR = build_generic
+ARCH_PATH = arch/generic
+
+ARCH_MACROS = -DARCH_GENERIC -DPROGRAM_MODE=$(PROGRAM_MODE)
+ARCH_FILES =
+
+# Compiler options
+#################################################################################################
+
+CC = gcc
+CFLAGS = -c -std=c99 -fopenmp -g3 $(INC_DIRS) $(ARCH_MACROS) $(MACROS) 
+
+LD = gcc
+LIBS = 
+LDFLAGS = -fopenmp $(LIB_DIRS) $(LIBS) -lpthread -lm
+
+# ARCH DEPENDENT CODE FILES
+#################################################################################################
+ 
+ARCH_OBJS = $(foreach file, $(ARCH_FILES), $(BUILD_DIR)/$(file).o)
+
+ALL_OBJS = $(OBJS) $(ARCH_OBJS)
+
+
+	

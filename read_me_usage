@@ -1,0 +1,98 @@
+In this document build parameters and program runtime parameters are explained.
+
+####################################################
+################ BUILD PARAMETERS ##################
+####################################################
+
+Code is targetted to run on multiple architectures, hus using different build files and configurations (aaand different compilers).
+
+# BUILD_ARCH
+First build parameter. Used to specify the compiler and compiler specific flags. Values it can take are listed below;
+1. generic: uses gcc with the most generic parameters as possible (See make_macros/generic_macros).
+2. icc: uses icc. Targetted for normal processors (See make_macros/icc_macros).
+3. mic_native: uses icc. Targetted for Intel Xeon Phi processor native execution (See make_macros/mic_native_macros).
+4. mic_offload (currently not available, See make_macros/mic_offload_macros)
+
+# RUN_MODE
+Code is tailored so that you can use primitives defined in core to build your specific application. This parameter specifies the file name which includes the main method (they are all defined under src/main).
+- You can check src/main/main.c for basic and most general configuration and use it to build your own.
+- After you compiled code successfuly, a binary file named $(RUN_MODE) will appear under build_$(BUILD_ARCH) directory.
+
+# PROGRAM_MODE = 0|1|2|3 (no_output|measure|debug|trace)
+Used to get tracing and collect debug information. Default mode is 1 (measure) if nothing is specified.
+
+Example build command:
+make all BUILD_ARCH=generic RUN_MODE=main
+
+
+####################################################
+############### RUN_TIME PARAMETERS ################
+####################################################
+
+There are multiple runtime parameters and they change depending on RUN_MODE selected during build configuration. 
+
+Explanation for each parameter;
+algorithm => algorithm type. Possible values: serial,serial_oski, mkl, parallel, parallel_oski, omp_victim_any, gws, dws, block
+matrix => Path of the matrix file, (format: mmf) 
+x => optional. Not needed at all. 
+y => optional. Not needed at all.
+runCountWarmUp => Before measurement there is a warm-up phase. This number determines how many times SpMxV will be performed. Default value is 10.
+runCountMeasure => How many times the code will perform SpMxV. Default value is 100.
+isSymmetric => Is the specified matrix Symmetric?? Either default:0(false) or 1(true).
+hasValues => Does the specified matrix have any values? (equivalent of !isBinary) Either default:0(false) or 1(true).
+ordering => path to file where row&col ordering is specified. No ordering is used in case this parameter is not specified.
+block => path to file where block sizes are specified. No ordering is used in case this parameter is not specified.
+numBlocks => how many threads will there be.
+threadsPerBlock => optional. Do not specify this value!!
+stealTreshold => queues will not steal from another queue if its job count falls below this value. Default is 1 
+netType => do not set this value. It's set to col by default.
+
+Possible examples;
+####################################################
+# for RUN_MODE=main #
+#####################
+
+NOTE: Set thread count affinity using OMP environment variables.
+
+General Parameters
+USAGE: ./bin algorithm=<algorithm> matrix=<M_path> [x=<x_path>] [y=<y_path>] [runCountWarmUp=<default:10>] [runCountMeasure=<default:100>] [isSymmetric=<default:0|1>] [hasValues=<default0|1>]
+
+Algorithm based parameters
+	algorithm=serial => [ordering=<rowcol_order_path>]
+	algorithm=serial_oski => [ordering=<rowcol_order_path>]
+	algorithm=mkl => [ordering=<rowcol_order_path>]
+	algorithm=parallel => [ordering=<rowcol_order_path>]
+	algorithm=parallel_oski => [ordering=<rowcol_order_path>]
+	algorithm=omp_victim_any => ordering=<rowcol_order_path> block=<block_path> numBlocks=<num_blocks> [netType=<default:col|row>]
+	algorithm=gws => ordering=<rowcol_order_path> block=<block_path> numBlocks=<num_blocks> threadsPerBlock=<threadsPerBlock> [netType=<default:col|row>]
+	algorithm=dws => ordering=<rowcol_order_path> block=<block_path> numBlocks=<num_blocks> [threadsPerBlock=<threadsPerBlock>] [netType=<default:col|row>] [stealTreshold=<default:1>]
+	algorithm=block (only row-net model) => ordering=<rowcol_order_path> block=<block_path> numBlocks=<num_blocks> [traversalType=<default:inorder|postorder>] [scheduler=<default:ring|tree>]
+
+Example;
+
+matrix=input/bcspwr05/bcspwr05.mtx
+algorithm=dws
+numBlocks=2
+ordering=input/bcspwr05/colnet/order_bcspwr05_262144
+block=input/bcspwr05/colnet/block_bcspwr05_262144
+runCountWarmUp=0
+runCountMeasure=1
+netType=col
+isSymmetric=1
+hasValues=0
+
+####################################################
+# for RUN_MODE=test_parallel_run #
+##################################
+
+NOTE: Set thread count affinity using OMP environment variables.
+USAGE: ./bin matrix=<M_path> orderings=<path1,path2,pa...> blocks=<path1,path2,pa...> numBlocks=<num_blocks> [runCountWarmUp=<default:10>] [runCountMeasure=<default:100>] [isSymmetric=<default:0|1>] [hasValues=<default0|1>]
+
+Example;
+
+matrix=input/webbase-1M/webbase-1M.mtx 
+orderings=input/webbase-1M/colnet/order_webbase-1M_131072,input/webbase-1M/colnet/order_webbase-1M_262144,input/webbase-1M/colnet/order_webbase-1M_524288,input/webbase-1M/colnet/order_webbase-1M_1048576
+blocks=input/webbase-1M/colnet/block_webbase-1M_131072,input/webbase-1M/colnet/block_webbase-1M_262144,input/webbase-1M/colnet/block_webbase-1M_524288,input/webbase-1M/colnet/block_webbase-1M_1048576
+numBlocks=3 
+runCountWarmUp=2
+runCountMeasure=2

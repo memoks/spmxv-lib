@@ -1,0 +1,5 @@
+all:	kway.o
+	$(CC) $(CFLAGS) -o kway kway.o -lpatoh64 -L. -I. -lm
+
+.c .o:
+	$(CC) $(CFLAGS) -o $@ -c $<

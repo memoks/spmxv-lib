@@ -1,0 +1,39 @@
+FIXES:
+- Comm_tree and tree_sched is different. 
+- Command line interface updated & tested.
+- adjusted numBlocks, threadsPerBlock, numThreads calculations for DWS
+- CLO options reimplemented
+- DWS_ARGS: Improved warm-up pointer to include the whole thing.
+- changed the name "scheduler type" to "stealing scheme"
+- changed the name "col net" to "1D row wise"
+- partitionMethod is hidden now!!
+- DWS_ARGS: setting way of function pointers changed now.
+- GWS changed as well, but is it needed???????????
+- Data prep & ordering methods for Seher's code (power of 2)
+
+TODOS:
+- Update read_me_usage file.
+- Integrate kway partition code into library (seperately).
+- Need to re-implement partial-fused datastructure!!
+- Update command line interfaces so that we can get rid of macros (hybrid data structure, hybrid extraction method)
+- Current structure for data preparation: CSR converted to => JDS converted to => hybrid, should do something about this because it takes awful lot of time and memory space to prepare data structures.
+  + Should I convert from triplets directly ??
+  + Should I keep all the conversion methods or delete them after replacement ??
+- Inspect & fix TODOs also !!
+- Get rid of most of the conversion methods (job batch conversion), they complicate process. Maybe provide simple versions of them for each job batch type.
+- Add padding in between to hybrid format.
+- There is a bug in TRUE hybrid form
+- Implement previous hybrid approach with treshold value and coo formats.
+- Try & implement coo-format ???
+- Add comm_tree's support for jobBatchCount
+- Test Data preparation methods all together. Add nice tracing options as well.
+- DWS Scheduler's list traversing overhead to steal half the elements results in poor performance for smaller matrices. Bigger ones also. Drops the stability of scheduler. Somehow need to implement tree lists data structure.
+- Must have the same partition count for ordered and unordered runs of the same matrix.
+- For matrices that are small and cannot populate all the threads, do not partition for a targeted cache size, partition so that all threads gets a fair share. And of course, this should also be "reported in excel file without any effort". What is required?
+  + C code for unordered partitioning (modify partitioning functions??).
+  + Python script for ordered partitioning (modify rb script).
+- rb code is useless. Must work on it to add:
+  + partitioning that is not exactly a power of 2. Continues until partition size falls down to some treshold value. => done
+  + row ordering
+  + column ordering
+  + partitioning tree output
